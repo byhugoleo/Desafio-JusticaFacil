@@ -59,14 +59,14 @@ class ScriptJustica:
     # Função interna, valida a data de entrada
     def __valida_data(self):
         try:
-            datetime.strptime(self.__data_public, "%j-%m-%Y")
+            datetime.strptime(self.__data_public, "%d-%m-%Y")
         except ValueError:
             raise ValueError('\n' + ('─' * 100) + f"\nData \"{self.__data_public}\" no formato incorreto, correto sendo: DD-MM-AAAA.\n" + ('─' * 100) + '\n')
 
-    def __verifica_downloads_chrome(self, auxdriver):
-        if not self.__driver.current_url.startswith("chrome://downloads"):
-            self.__driver.get("chrome://downloads/")
-        return self.__driver.execute_script("""
+    def __verifica_downloads_chrome(self, driver):
+        if not driver.current_url.startswith("chrome://downloads"):
+            driver.get("chrome://downloads/")
+        return driver.execute_script("""
         var items = document.querySelector('downloads-manager').shadowRoot.getElementById('downloadsList').items;
         if (items.every(e => e.state === "COMPLETE"))
             return items.map(e => e.fileUrl || e.file_url);
@@ -79,27 +79,27 @@ class ScriptJustica:
         driver.get(self.__site_stf_diarios)
 
         # Pesquisa pela data fornecida
-        aux_textcpy = self.__driver.find_element_by_id("argumento")
+        aux_textcpy = driver.find_element_by_id("argumento")
         aux_textcpy.send_keys(self.__data_public.replace('-', '/', 2))
         aux_textcpy.send_keys(Keys.CONTROL, 'a')
         aux_textcpy.send_keys(Keys.CONTROL, 'c')
         aux_textcpy.clear()
 
-        pesq_datapub = self.__driver.find_element_by_id("dataP")
+        pesq_datapub = driver.find_element_by_id("dataP")
         pesq_datapub.clear()
         pesq_datapub.send_keys(Keys.CONTROL, 'v')
 
-        botao_pesq = self.__driver.find_element_by_xpath("/html/body/div/div[3]/div[2]/div[2]/div[2]/form/table/tbody/tr[3]/td/input[1]")
+        botao_pesq = driver.find_element_by_xpath("/html/body/div/div[3]/div[2]/div[2]/div[2]/form/table/tbody/tr[3]/td/input[1]")
         botao_pesq.click()
 
         # Aguarda carregar a tabela com os diários
         time.sleep(10)
         
         try:
-            dados_tab = WebDriverWait(self.__driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "resultadoLista")))
+            dados_tab = WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.CLASS_NAME, "resultadoLista")))
         except TimeoutException:
             print('\n' + ('─' * 100) + f"\nNenhum diário oficial encontrado na data {self.__data_public}.\n" + ('─' * 100) + '\n')
-            self.__driver.close()
+            driver.close()
             return False # Não há diários nessa data : Retorna Falso.
 
         # Downloas dos diários
@@ -107,10 +107,10 @@ class ScriptJustica:
         for i in dados_lin:
             dados_col = i.find_elements_by_tag_name("td")
             if (len(dados_col)):
-                self.__driver.get(dados_col[3].find_element_by_tag_name("a").get_attribute("href"))
+                driver.get(dados_col[3].find_element_by_tag_name("a").get_attribute("href"))
         
         # Salvar arquivos renomeados com seu respectivo MD5
-        diarios_pdf = WebDriverWait(self.__driver, 120, 1).until(self.__verifica_downloads_chrome)
+        diarios_pdf = WebDriverWait(driver, 120, 1).until(self.__verifica_downloads_chrome)
         diarios_pdf = list(map(lambda nome_pdf : nome_pdf[8:].replace('%20', ' ').replace('/', '\\'), diarios_pdf))
         dir_diarios = os.path.join(self.dir_nome, self.__data_public.replace('-', '_', 2))
 
@@ -124,7 +124,7 @@ class ScriptJustica:
             print(diarios_pdf[i] + '\n' + os.path.join(dir_diarios, diarios_pdf_MD5[i] + ".pdf") + '\n' + ('─' * 100) + '\n')
             shutil.move(diarios_pdf[i], os.path.join(dir_diarios, diarios_pdf_MD5[i] + ".pdf"))
 
-        self.__driver.close()
+        driver.close()
 
         return True # Script executado com sucesso : Retorna Verdadeiro.
 

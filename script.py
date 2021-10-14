@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import time
 from datetime import datetime
 import hashlib
 from selenium import webdriver

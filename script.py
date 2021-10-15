@@ -1,4 +1,4 @@
-# Import do módulo Selenium -> pip install -U selenium
+# -*- coding: utf-8 -*-
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.common.exceptions import TimeoutException
@@ -139,6 +139,6 @@ class ScriptJustica:
 S = ScriptJustica()
 # print(S)
 S.executar()
-S.mudar_data_pesq("04-03-2021")
+# S.mudar_data_pesq("04-03-2021")
 # print(S)
-S.executar()
+# S.executar()
